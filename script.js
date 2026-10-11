@@ -5,6 +5,16 @@ const ctx = myCanvas.getContext("2d");
 myCanvas.width = 800;
 myCanvas.height = 500;
 
+// Scale the fixed-size stage (canvas + menus) to fill the whole window
+const stage = document.getElementById("stage");
+function fitStage() {
+  const scaleX = window.innerWidth / myCanvas.width;
+  const scaleY = window.innerHeight / myCanvas.height;
+  stage.style.transform = `scale(${scaleX}, ${scaleY})`;
+}
+addEventListener("resize", fitStage);
+fitStage();
+
 // Configs
 const gravity = 1;
 let speedObj = 0.7;
@@ -278,7 +288,7 @@ class Game {
 
 // can pass in arguments image
 class Platform {
-  constructor(x, y, width, height, image, color) {
+  constructor(x, y, width, height, image, color, radius = 0) {
     this.position = {
       x: x,
       y: y,
@@ -287,12 +297,24 @@ class Platform {
     this.height = height;
     this.image = image;
     this.color = color;
+    this.radius = radius;
 
     this.pattern = ctx.createPattern(grass1, "repeat");
   }
   update() {
     ctx.fillStyle = "transparent"; /* this.pattern; */
     ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+    // Clip to a rounded rectangle so the grass tile has round corners
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(
+      this.position.x,
+      this.position.y - 10,
+      this.width,
+      this.height,
+      this.radius
+    );
+    ctx.clip();
     ctx.drawImage(
       this.image,
       this.position.x,
@@ -300,6 +322,7 @@ class Platform {
       this.width,
       this.height
     );
+    ctx.restore();
   }
 }
 
@@ -606,7 +629,9 @@ function randomObjects(n) {
           arrPlatY[randomArrPlatYIndex],
           randomWidth,
           30,
-          smallplatform
+          smallplatform,
+          undefined,
+          15
         )
       );
       let imageIndexRandom = Math.floor(Math.random() * arrFruit.length);
@@ -755,6 +780,9 @@ function collisionsAndUpdate() {
         elem.position.x + elem.width >= currentGame.currentPlayer.position.x
       ) {
         // Velocity to 0 when the player land on a platform
+        // Snap the feet onto the platform so there is no gap after landing
+        currentGame.currentPlayer.position.y =
+          elem.position.y - currentGame.currentPlayer.height;
 
         if (gameAsStarted) {
           currentGame.currentPlayer.currentSprite =
