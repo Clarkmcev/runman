@@ -9,21 +9,21 @@
 <body>
   <div id="stage">
     <div id="start-menu">
-        <img class="biglogo" src="./IMG/Runman.png">
+        <canvas class="biglogo"></canvas>
         <div class="description">
             <div>Code and Music by Clark McEvoy</div>
             <div>Press SPACE to jump</div>
             <div>SPACE + SPACE to double jump</div>
             <div>DOWN ARROW to fall out of a platform</div>
         </div>
-        <img id="press-enter" src="./IMG/press enter.png">
+        <canvas id="press-enter"></canvas>
     </div>
     <div id="game-over">
-        <img class="blackscreen" src="./IMG/game over menu.png">
-        <img class="gameovermessage" src="./IMG/game over title.png">
+        <canvas class="blackscreen"></canvas>
+        <canvas class="gameovermessage"></canvas>
         <div id="return">ESC -> Return to main menu</div>
         <div id="score">Score <span id="scorespan">0</span></div>
-        <img id="overpress" src="./IMG/press enter to restart.png">
+        <canvas id="overpress"></canvas>
     </div>
     <canvas id="game-board">
     </canvas>

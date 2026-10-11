@@ -1,9 +1,43 @@
+import {
+  back1,
+  back2,
+  back3,
+  back4,
+  back5,
+  maskRun,
+  maskJump,
+  maskDoubleJump,
+  maskFall,
+  maskIdle,
+  makePlatform,
+  cherryImg,
+  melonImg,
+  orangeImg,
+  pineappleImg,
+  strawberryImg,
+  bananaImg,
+  collectedImg,
+  nothingImg,
+  appleImg,
+  pixelText,
+  pixelPanel,
+} from "./sprites.js";
+
 // Canvas
 const myCanvas = document.getElementById("game-board");
 const ctx = myCanvas.getContext("2d");
 
 myCanvas.width = 800;
 myCanvas.height = 500;
+// Keep the low-res pixel art sharp when it is scaled up
+ctx.imageSmoothingEnabled = false;
+
+// Menu titles are pixel text drawn in code
+pixelText(document.querySelector(".biglogo"), "Runman", { bold: true });
+pixelText(document.getElementById("press-enter"), "Press Enter");
+pixelPanel(document.querySelector(".blackscreen"), 130, 56);
+pixelText(document.querySelector(".gameovermessage"), "Game Over", { bold: true });
+pixelText(document.getElementById("overpress"), "Press Enter\nto restart");
 
 // Scale the fixed-size stage (canvas + menus) to fill the whole window
 const stage = document.getElementById("stage");
@@ -45,70 +79,7 @@ jumpLand.volume = 1;
 playerFall.volume = 0.1;
 footSteps.volume = 0.1;
 
-const back1 = new Image(800, 700);
-const back2 = new Image(800, 700);
-const back3 = new Image(800, 700);
-const back4 = new Image(800, 700);
-const back5 = new Image(800, 700);
-const back6 = new Image(88, 700);
-
-const maskRun = new Image(32, 32);
-const maskJump = new Image(100, 200);
-const maskDoubleJump = new Image(100, 200);
-const maskFall = new Image(100, 200);
-const maskIdle = new Image(100, 200);
-
-const grass1 = new Image(1000, 500);
-const grass2 = new Image(100, 200);
-const grass3 = new Image(100, 200);
-
-const bigplatform = new Image(100, 200);
-const smallplatform = new Image(100, 200);
-
-const block1 = new Image(800, 700);
-
-//Fruits
-const cherryImg = new Image(800, 700);
-const melonImg = new Image(800, 700);
-const orangeImg = new Image(800, 700);
-const pineappleImg = new Image(800, 700);
-const strawberryImg = new Image(800, 700);
-const bananaImg = new Image(800, 700);
-const collectedImg = new Image(800, 700);
-const nothingImg = new Image(800, 700);
-const appleImg = new Image(800, 700);
 musicBack;
-
-back1.src = "./IMG/parallax-mountain-foreground-trees.png";
-back2.src = "./IMG/parallax-mountain-trees.png";
-back3.src = "./IMG/parallax-mountain-bg.png";
-back4.src = "./IMG/parallax-mountain-montain-far.png";
-back5.src = "./IMG/parallax-mountain-mountains.png";
-back6.src = "./IMG/Hills Layer 05.png";
-
-maskRun.src = "./IMG/mask run.png";
-maskJump.src = "./IMG/mask jump.png";
-maskDoubleJump.src = "./IMG/mask double jump.png";
-maskFall.src = "./IMG/Fall (32x32).png";
-maskIdle.src = "./IMG/Idle (32x32).png";
-
-grass1.src = "./IMG/grass.png";
-grass2.src = "./IMG/grass_half.png";
-grass3.src = "./IMG/grass_top.png";
-
-bigplatform.src = "./IMG/bigplatform.png";
-smallplatform.src = "./IMG/hills layer cropped.png";
-block1.src = "./IMG/block.png";
-
-cherryImg.src = "./IMG/Cherries.png";
-melonImg.src = "./IMG/Melon.png";
-orangeImg.src = "./IMG/Orange.png";
-pineappleImg.src = "./IMG/Pineapple.png";
-strawberryImg.src = "./IMG/Strawberry.png";
-bananaImg.src = "./IMG/Bananas.png";
-collectedImg.src = "./IMG/Collected.png";
-nothingImg.src = "./IMG/nothing.png";
-appleImg.src = "./IMG/Apple.png";
 
 let widthBackPlus = 0;
 let widthBack = 0;
@@ -298,8 +269,6 @@ class Platform {
     this.image = image;
     this.color = color;
     this.radius = radius;
-
-    this.pattern = ctx.createPattern(grass1, "repeat");
   }
   update() {
     ctx.fillStyle = "transparent"; /* this.pattern; */
@@ -629,7 +598,7 @@ function randomObjects(n) {
           arrPlatY[randomArrPlatYIndex],
           randomWidth,
           30,
-          smallplatform,
+          makePlatform(randomWidth, 30),
           undefined,
           15
         )
@@ -665,7 +634,7 @@ function Init() {
 
   // Platform plus froot init
   currentGame.currentCoins = [new Coin(560, 350, 50, 60, "cherry")];
-  currentGame.currentPlatforms = [new Platform(0, 470, 800, 50, bigplatform)];
+  currentGame.currentPlatforms = [new Platform(0, 470, 800, 50, makePlatform(800, 50))];
   currentGame.currentPlatforms[0].update();
   currentGame.currentCoins[0].update();
   currentGame.currentPlayer.update();
