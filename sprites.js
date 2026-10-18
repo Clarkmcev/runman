@@ -338,43 +338,95 @@ function ridge(seed, count, minH, maxH, slope) {
   };
 }
 
-// Sky: banded dusk gradient with stars
-export const back3 = layer((g) => {
-  const bands = ["#1d1736", "#2a1f4a", "#3d2a5c", "#5a3a6e", "#7d4a78", "#a85d7a", "#d47f78"];
-  const bandH = BG_H / bands.length;
-  bands.forEach((color, i) => {
-    px(g, 0, Math.floor(i * bandH), BG_W, Math.ceil(bandH) + 1, color);
-    // Dither the edge between two bands
-    if (i > 0) {
-      g.fillStyle = color;
-      for (let x = 0; x < BG_W; x += 2) g.fillRect(x, Math.floor(i * bandH) - 1, 1, 1);
+// Colours for each theme: a dusk scene for dark, a sunny day for light
+const PALETTES = {
+  dark: {
+    sky: ["#1d1736", "#2a1f4a", "#3d2a5c", "#5a3a6e", "#7d4a78", "#a85d7a", "#d47f78"],
+    stars: "#fff6d8",
+    sun: ["#ffe9b0", "#fff6d8"],
+    far: "#4a3266",
+    near: "#2e2140",
+    nearLit: "#523a63",
+    mid: "#241a35",
+    midLit: "#3a2a4f",
+    fore: "#150f22",
+  },
+  light: {
+    sky: ["#4fa8e0", "#62b4e6", "#77c0eb", "#8ccbef", "#a3d6f2", "#bce2f4", "#d6eef4"],
+    clouds: ["#ffffff", "#dcecf7"],
+    sun: ["#ffd23f", "#fff3a6"],
+    far: "#9dbcdc",
+    near: "#6f93b8",
+    nearLit: "#9fc0dc",
+    mid: "#4f8a5b",
+    midLit: "#6dab68",
+    fore: "#2d5e3a",
+  },
+};
+
+function cloud(g, x, y, [color, shade]) {
+  disc(g, x + 1, y + 1, 4, shade);
+  disc(g, x + 6, y - 1, 5, shade);
+  disc(g, x + 11, y + 1, 4, shade);
+  disc(g, x, y, 4, color);
+  disc(g, x + 5, y - 2, 5, color);
+  disc(g, x + 10, y, 4, color);
+  px(g, x - 3, y + 2, 17, 3, color);
+  px(g, x - 2, y + 5, 15, 1, shade);
+}
+
+// Sky: banded gradient with stars (dark) or clouds (light)
+function sky(p) {
+  return layer((g) => {
+    const bandH = BG_H / p.sky.length;
+    p.sky.forEach((color, i) => {
+      px(g, 0, Math.floor(i * bandH), BG_W, Math.ceil(bandH) + 1, color);
+      // Dither the edge between two bands
+      if (i > 0) {
+        g.fillStyle = color;
+        for (let x = 0; x < BG_W; x += 2) g.fillRect(x, Math.floor(i * bandH) - 1, 1, 1);
+      }
+    });
+    const rand = rng(7);
+    if (p.stars) {
+      g.fillStyle = p.stars;
+      for (let i = 0; i < 40; i++) g.fillRect(Math.floor(rand() * BG_W), Math.floor(rand() * 50), 1, 1);
+    }
+    disc(g, 150, 30, 7, p.sun[0]);
+    disc(g, 148, 28, 5, p.sun[1]);
+    if (p.clouds) {
+      for (let i = 0; i < 5; i++) {
+        const x = Math.floor(rand() * BG_W);
+        const y = 12 + Math.floor(rand() * 40);
+        // Draw near both edges too so the layer tiles without seams
+        [x - BG_W, x, x + BG_W].forEach((cx) => cloud(g, cx, y, p.clouds));
+      }
     }
   });
-  const rand = rng(7);
-  g.fillStyle = "#fff6d8";
-  for (let i = 0; i < 40; i++) g.fillRect(Math.floor(rand() * BG_W), Math.floor(rand() * 50), 1, 1);
-  disc(g, 150, 30, 7, "#ffe9b0");
-  disc(g, 148, 28, 5, "#fff6d8");
-});
+}
 
 // Far mountains
-export const back5 = layer((g) => {
-  const r = ridge(11, 4, 50, 75, 0.9);
-  for (let x = 0; x < BG_W; x++) {
-    const { h } = r(x);
-    px(g, x, BG_H - h, 1, h, "#4a3266");
-  }
-});
+function farMountains(p) {
+  return layer((g) => {
+    const r = ridge(11, 4, 50, 75, 0.9);
+    for (let x = 0; x < BG_W; x++) {
+      const { h } = r(x);
+      px(g, x, BG_H - h, 1, h, p.far);
+    }
+  });
+}
 
 // Near mountains with a lit left face
-export const back4 = layer((g) => {
-  const r = ridge(23, 3, 40, 62, 0.75);
-  for (let x = 0; x < BG_W; x++) {
-    const { h, dx } = r(x);
-    px(g, x, BG_H - h, 1, h, "#2e2140");
-    if (dx < 0 && dx > -14) px(g, x, BG_H - h, 1, Math.round(10 + dx * 0.5), "#523a63");
-  }
-});
+function nearMountains(p) {
+  return layer((g) => {
+    const r = ridge(23, 3, 40, 62, 0.75);
+    for (let x = 0; x < BG_W; x++) {
+      const { h, dx } = r(x);
+      px(g, x, BG_H - h, 1, h, p.near);
+      if (dx < 0 && dx > -14) px(g, x, BG_H - h, 1, Math.round(10 + dx * 0.5), p.nearLit);
+    }
+  });
+}
 
 function pine(g, x, baseY, height, color, light) {
   const w = Math.round(height * 0.45);
@@ -401,8 +453,21 @@ function forest(seed, count, minH, maxH, groundH, color, light) {
   });
 }
 
-export const back2 = forest(31, 26, 14, 26, 10, "#241a35", "#3a2a4f");
-export const back1 = forest(47, 12, 22, 40, 4, "#150f22", null);
+function backgroundSet(p) {
+  return {
+    back1: forest(47, 12, 22, 40, 4, p.fore, null),
+    back2: forest(31, 26, 14, 26, 10, p.mid, p.midLit),
+    back3: sky(p),
+    back4: nearMountains(p),
+    back5: farMountains(p),
+  };
+}
+
+// Background layers for each theme, keyed by theme name
+export const backgrounds = {
+  dark: backgroundSet(PALETTES.dark),
+  light: backgroundSet(PALETTES.light),
+};
 
 // PLATFORMS (pixel size of 3 screen pixels)
 const PLATFORM_PIXEL = 3;

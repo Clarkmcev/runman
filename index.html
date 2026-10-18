@@ -12,22 +12,32 @@
         <canvas class="biglogo"></canvas>
         <div class="description">
             <div>Code and Music by Clark McEvoy</div>
-            <div>Press SPACE to jump</div>
-            <div>SPACE + SPACE to double jump</div>
-            <div>DOWN ARROW to fall out of a platform</div>
+            <div class="keys">Press SPACE to jump</div>
+            <div class="keys">SPACE + SPACE to double jump</div>
+            <div class="keys">DOWN ARROW to fall out of a platform</div>
+            <div class="keys">T to switch light / dark theme</div>
+            <div class="keys">M to turn sound on / off</div>
+            <div class="touch">Tap the right side to jump</div>
+            <div class="touch">Tap twice to double jump</div>
+            <div class="touch">Tap the left side to fall out of a platform</div>
         </div>
         <canvas id="press-enter"></canvas>
     </div>
     <div id="game-over">
         <canvas class="blackscreen"></canvas>
         <canvas class="gameovermessage"></canvas>
-        <div id="return">ESC -> Return to main menu</div>
+        <div id="return"><span class="keys">ESC -> </span>Return to main menu</div>
         <div id="score">Score <span id="scorespan">0</span></div>
         <canvas id="overpress"></canvas>
     </div>
     <canvas id="game-board">
     </canvas>
+    <div id="toolbar">
+      <button id="sound-toggle" type="button">Sound on</button>
+      <button id="theme-toggle" type="button">Theme</button>
+    </div>
   </div>
+  <div id="rotate">Rotate your device</div>
     <script src="./script.js" type="module"></script>
 </body>
 
