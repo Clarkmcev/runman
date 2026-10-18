@@ -1,9 +1,25 @@
+:root {
+    --text: yellow;
+    --backdrop: black;
+}
+
+:root[data-theme="light"] {
+    --text: #2a2448;
+    --backdrop: #d6eef4;
+}
+
 html, body {
     margin: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: black;
+    background: var(--backdrop);
+    /* No scrolling, pinch zoom or double-tap zoom: every tap is a game input */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* The game is drawn at a fixed 800x500 and scaled to fill the window (see script.js) */
@@ -24,7 +40,7 @@ html, body {
 .description {
     padding-top: 60px;
     position: absolute;
-    color: yellow;
+    color: var(--text);
     font-size: 17px;
     margin-left: auto;
     font-family: bit;
@@ -36,7 +52,7 @@ html, body {
 #return {
     padding-top: 20px;
     position: absolute;
-    color: yellow;
+    color: var(--text);
     font-size: 20px;
     margin-left: auto;
     font-family: bit;
@@ -129,5 +145,64 @@ html, body {
         margin-right: auto;
         left: 0;
         right: 0;
+    }
+}
+
+#return {
+    cursor: pointer;
+}
+
+#toolbar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 8px;
+}
+
+#toolbar button {
+    padding: 4px 10px;
+    font-family: bit;
+    font-size: 16px;
+    color: var(--text);
+    background: transparent;
+    border: 2px solid var(--text);
+    cursor: pointer;
+}
+
+/* Control hints: keyboard by default, taps on touch screens */
+.touch {
+    display: none;
+}
+
+#rotate {
+    display: none;
+}
+
+@media (pointer: coarse) {
+    .keys {
+        display: none;
+    }
+
+    .touch {
+        display: block;
+    }
+
+    /* The game is landscape only */
+    @media (orientation: portrait) {
+        #stage {
+            display: none;
+        }
+
+        #rotate {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: bit;
+            font-size: 24px;
+            color: var(--text);
+        }
     }
 }

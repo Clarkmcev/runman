@@ -1,9 +1,5 @@
 import {
-  back1,
-  back2,
-  back3,
-  back4,
-  back5,
+  backgrounds,
   maskRun,
   maskJump,
   maskDoubleJump,
@@ -32,12 +28,41 @@ myCanvas.height = 500;
 // Keep the low-res pixel art sharp when it is scaled up
 ctx.imageSmoothingEnabled = false;
 
+// Phones and tablets get tap prompts instead of key prompts
+const isTouch = matchMedia("(pointer: coarse)").matches;
+
 // Menu titles are pixel text drawn in code
 pixelText(document.querySelector(".biglogo"), "Runman", { bold: true });
-pixelText(document.getElementById("press-enter"), "Press Enter");
+pixelText(document.getElementById("press-enter"), isTouch ? "Tap to start" : "Press Enter");
 pixelPanel(document.querySelector(".blackscreen"), 130, 56);
 pixelText(document.querySelector(".gameovermessage"), "Game Over", { bold: true });
-pixelText(document.getElementById("overpress"), "Press Enter\nto restart");
+pixelText(document.getElementById("overpress"), isTouch ? "Tap\nto restart" : "Press Enter\nto restart");
+
+// Theme: saved choice, otherwise follow the system setting. T toggles it.
+const THEME_KEY = "runman-theme";
+const hudColor = { dark: "yellow", light: "#2a2448" };
+let theme = loadTheme();
+applyTheme();
+
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {}
+  return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = theme;
+}
+
+function toggleTheme() {
+  theme = theme === "light" ? "dark" : "light";
+  applyTheme();
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {}
+}
 
 // Scale the fixed-size stage (canvas + menus) to fill the whole window
 const stage = document.getElementById("stage");
@@ -79,6 +104,45 @@ jumpLand.volume = 1;
 playerFall.volume = 0.1;
 footSteps.volume = 0.1;
 
+// Sound on/off: saved between visits, M toggles it
+const soundButton = document.getElementById("sound-toggle");
+const SOUND_KEY = "runman-sound";
+const sounds = [
+  jumpSound,
+  doubleJump,
+  playerFall,
+  footSteps,
+  fruitCollected,
+  jumpLand,
+  musicBack,
+  enterSound,
+  gameOverSound,
+  musicFront,
+];
+let soundOn = loadSound();
+applySound();
+
+function loadSound() {
+  try {
+    return localStorage.getItem(SOUND_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+function applySound() {
+  sounds.forEach((sound) => (sound.muted = !soundOn));
+  soundButton.textContent = soundOn ? "Sound on" : "Sound off";
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  applySound();
+  try {
+    localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off");
+  } catch {}
+}
+
 musicBack;
 
 let widthBackPlus = 0;
@@ -104,6 +168,8 @@ const pressEnterRestart = document.getElementById("overpress");
 const scoreSpan = document.getElementById("scorespan");
 const startMenu = document.getElementById("start-menu");
 const gameOverMenu = document.getElementById("game-over");
+const themeButton = document.getElementById("theme-toggle");
+const returnButton = document.getElementById("return");
 
 let pressLoop1 = false;
 let pressLoop2 = false;
@@ -493,7 +559,7 @@ function computeScore() {
 
   currentGame.score = nFruitCollected.reduce((a, b) => a + b, 0);
   ctx.font = "50px bit";
-  ctx.fillStyle = "yellow";
+  ctx.fillStyle = hudColor[theme];
   ctx.fillText(`Score ${currentGame.score}`, 20, 30);
 }
 
@@ -508,50 +574,121 @@ function updateSpeed() {
 }
 let nJump = 0;
 
+// Actions shared by the keyboard and touch controls
+function dropDown() {
+  if (!currentGame.currentPlayer) return;
+  currentGame.currentPlayer.position.y += 10;
+}
+
+function pressStart() {
+  startMenu.style.display = "none";
+  enterSound.play();
+  if (!gameAsStarted) {
+    startGame();
+  }
+  if (gameAsStarted /*&& checkGameOver() === true*/) {
+    gameOverMenu.style.display = "none";
+    Init();
+  }
+}
+
+function jump() {
+  if (!currentGame.currentPlayer) return;
+  nJump += 1;
+  if (nJump === 1) {
+    jumpSound.play();
+    currentGame.currentPlayer.velocity.y -= 18;
+    currentGame.currentPlayer.CurrentMaxFrames =
+      currentGame.currentPlayer.CurrentMaxFrames =
+        currentGame.currentPlayer.sprites.jump.maxFrames;
+  } else if (nJump === 2) {
+    doubleJump.play(currentGame.currentPlayer.velocity.y);
+    currentGame.currentPlayer.velocity.y -= 20;
+    currentGame.currentPlayer.CurrentMaxFrames =
+      currentGame.currentPlayer.sprites.doubleJump.maxFrames;
+    currentGame.currentPlayer.currentSprite =
+      currentGame.currentPlayer.sprites.doubleJump.image;
+  }
+}
+
+function returnToMenu() {
+  if (!gameAsStarted) {
+    gameOverMenu.style.display = "none";
+    startMenu.style.display = "block";
+    Init();
+  }
+}
+
 // EventListener
 addEventListener("keydown", (event) => {
   switch (event.code) {
     case "ArrowDown":
-      currentGame.currentPlayer.position.y += 10;
+      dropDown();
       break;
     case "Enter":
-      startMenu.style.display = "none";
-      enterSound.play();
-      if (!gameAsStarted) {
-        startGame();
-      }
-      if (gameAsStarted /*&& checkGameOver() === true*/) {
-        gameOverMenu.style.display = "none";
-        Init();
-      }
-
+      pressStart();
       break;
     case "Space":
-      nJump += 1;
-      if (nJump === 1) {
-        jumpSound.play();
-        currentGame.currentPlayer.velocity.y -= 18;
-        currentGame.currentPlayer.CurrentMaxFrames =
-          currentGame.currentPlayer.CurrentMaxFrames =
-            currentGame.currentPlayer.sprites.jump.maxFrames;
-      } else if (nJump === 2) {
-        doubleJump.play(currentGame.currentPlayer.velocity.y);
-        currentGame.currentPlayer.velocity.y -= 20;
-        currentGame.currentPlayer.CurrentMaxFrames =
-          currentGame.currentPlayer.sprites.doubleJump.maxFrames;
-        currentGame.currentPlayer.currentSprite =
-          currentGame.currentPlayer.sprites.doubleJump.image;
-      }
+      jump();
+      break;
+    case "KeyT":
+      toggleTheme();
+      break;
+    case "KeyM":
+      toggleSound();
       break;
     case "Escape":
-      if (!gameAsStarted) {
-        gameOverMenu.style.display = "none";
-        startMenu.style.display = "block";
-        Init();
-      }
+      returnToMenu();
       break;
   }
 });
+
+// Touch / mouse: while playing, the right half of the screen jumps and the
+// left half drops through a platform; on a menu, a tap starts the game.
+let tapStartedOnMenu = false;
+
+stage.addEventListener("pointerdown", (event) => {
+  tapStartedOnMenu = !gameAsStarted;
+  if (!gameAsStarted) return;
+  if (event.clientX < window.innerWidth / 2) {
+    dropDown();
+  } else {
+    jump();
+  }
+});
+
+// Starting happens on release: browsers only allow audio and fullscreen
+// after a completed tap, not on touchstart / pointerdown.
+stage.addEventListener("pointerup", () => {
+  if (!tapStartedOnMenu || gameAsStarted) return;
+  tapStartedOnMenu = false;
+  if (isTouch) goFullscreen();
+  pressStart();
+});
+
+function goFullscreen() {
+  if (document.fullscreenElement || !document.documentElement.requestFullscreen) return;
+  document.documentElement
+    .requestFullscreen()
+    .then(() => screen.orientation?.lock?.("landscape"))
+    .catch(() => {});
+}
+
+// Buttons on top of the stage must not also count as a tap on the game
+[themeButton, soundButton, returnButton].forEach((button) => {
+  button.addEventListener("pointerdown", (event) => event.stopPropagation());
+  button.addEventListener("pointerup", (event) => event.stopPropagation());
+});
+// Drop focus after a click so SPACE / ENTER don't press the button again
+themeButton.addEventListener("click", () => {
+  toggleTheme();
+  themeButton.blur();
+});
+soundButton.addEventListener("click", () => {
+  toggleSound();
+  soundButton.blur();
+});
+returnButton.addEventListener("click", returnToMenu);
 
 function checkGameOver() {
   if (currentGame.currentPlayer.position.y >= myCanvas.height) {
@@ -645,6 +782,7 @@ animate();
 
 function backgroundRender() {
   //   BACKGROUND RENDERING
+  const { back1, back2, back3, back4, back5 } = backgrounds[theme];
   //   BackGround sky
   ctx.drawImage(back3, widthBackPlus, 0, myCanvas.width, myCanvas.height);
   ctx.drawImage(
